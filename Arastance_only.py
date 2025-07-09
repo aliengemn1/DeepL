@@ -379,14 +379,14 @@ with torch.no_grad():
         preds = outputs.logits.argmax(dim=1)
         arabert_preds.extend(preds.cpu().tolist())
         arabert_true.extend(labels.cpu().tolist())
-model_scores["Arabert"] = compute_metrics(arabert_true, arabert_preds)
+model_scores["AraBERT"] = compute_metrics(arabert_true, arabert_preds)
 
 print("\nAraBERT Results")
 from sklearn.metrics import classification_report
 print(classification_report(arabert_true, arabert_preds, target_names=label_encoderA.classes_))
 
-# Print macro and weighted averages
-arabert_metrics = model_scores["Arabert"]
+# Print macro and weighted averages for AraBERT
+arabert_metrics = model_scores["AraBERT"]
 print("Macro avg:")
 print(f"  Precision: {arabert_metrics['precision_macro']:.4f}")
 print(f"  Recall:    {arabert_metrics['recall_macro']:.4f}")
@@ -423,9 +423,29 @@ plt.tight_layout()
 plt.savefig("arastance_model_comparison.png")
 plt.show()
 
-"""
-Documentation:
-- This script loads the Arastance dataset, preprocesses the text, and trains/evaluates SVM, CNN, LSTM, BiLSTM, and Arabert models.
-- It computes Accuracy, Precision, Recall, and F1-score for each model and visualizes the results in a bar chart.
-- The chart is saved as 'arastance_model_comparison.png'.
-""" 
+# Export results to CSV and Markdown
+import csv
+with open("arastance_results.csv", "w", newline="") as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(["Model"] + [m[1] for m in metrics_to_plot])
+    for model in labels:
+        writer.writerow([model] + [f"{model_scores[model][m[0]]:.4f}" for m in metrics_to_plot])
+
+with open("arastance_results.md", "w") as mdfile:
+    mdfile.write("# Arastance Model Results & Comparison\n\n")
+    mdfile.write("This report summarizes the performance of SVM, CNN, LSTM, BiLSTM, and AraBERT models on the Arastance dataset. The metrics used are **Accuracy**, **Precision**, **Recall**, and **F1-score**.\n\n")
+    mdfile.write("## Model Performance Chart\n\n")
+    mdfile.write("![Arastance Model Comparison](arastance_model_comparison.png)\n\n")
+    mdfile.write("## Metrics Table\n\n")
+    mdfile.write("| Model | Accuracy | F1 Macro | F1 Weighted | Precision Macro | Precision Weighted | Recall Macro | Recall Weighted |\n")
+    mdfile.write("|---|---|---|---|---|---|---|---|\n")
+    for model in labels:
+        mdfile.write(f"| {model} " + " ".join([f"| {model_scores[model][m[0]]:.4f}" for m in metrics_to_plot]) + " |\n")
+    mdfile.write("\n---\n\n")
+    mdfile.write("## How to Interpret\n\n")
+    mdfile.write("- **Accuracy**: Overall correctness of the model.\n")
+    mdfile.write("- **Precision**: How many selected items are relevant.\n")
+    mdfile.write("- **Recall**: How many relevant items are selected.\n")
+    mdfile.write("- **F1-score**: Harmonic mean of precision and recall.\n")
+    mdfile.write("- **Macro avg**: Average metric across classes, treating all classes equally.\n")
+    mdfile.write("- **Weighted avg**: Average metric across classes, weighted by support (number of true instances per class).\n") 
